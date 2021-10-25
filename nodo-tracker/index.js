@@ -64,10 +64,10 @@ function manejarMensaje(mensaje) {
 		case 'found':
 			manejarMensajeFound(mensajeJSON.body);
 		break;
-		case 'store'
+		case 'store':
 			manejarMensajeStore(mensajeJSON.body);
 		break;
-		case default: // es el hash
+		default: // es el hash
 			manejarMensajeSearch(mensajeJSON.body);
 		break;
 	}
