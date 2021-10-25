@@ -25,6 +25,7 @@ server.on('error', function(error) {
 	console.log('Hubo un error:');
 	console.log(error);
 })
+// tener en cuenta que puede ser tanto de otro tracker como de un par
 server.on('message', function(msg, rinfo) {
 	console.log('Se recibió un mensaje:');
 	console.log(msg); //objeto JSON
@@ -34,7 +35,7 @@ server.on('message', function(msg, rinfo) {
 	mensaje = armarMensaje(msg); //habría que ver qué pasa si es muy grande y se manda en varios buffers
 	console.log('mensaje:');
 	console.log(mensaje);
-	manejarMensaje(mensaje);
+	manejarMensajeTracker(mensaje);
 });
 
 server.on('listening', function() {
@@ -47,9 +48,10 @@ function armarMensaje(msg) {
 	return msg.toString();
 }
 
-// Manejo de mensajes del server
+// Manejo de mensajes del server UDP
+
 // Recibe el *string* del mensaje y lo manda a la función que se encargue de ese tipo de mensaje
-function manejarMensaje(mensaje) {
+function manejarMensajeTracker(mensaje) {
 	mensajeJSON = JSON.parse(mensaje);
 	mensajeJSON.route = ruta;
 	//TODO implementar con callbacks probablemente
@@ -74,10 +76,15 @@ function manejarMensaje(mensaje) {
 }
 
 // Formateo de mensajes de interfaz
+/* 
+// creo que este mensaje lo manda sólo el server
+// de ser asi, capaz se podria armar una clase con route y body
+// en vez de las funciones de formato
 function formatoSearch(hash) {
 	let ruta = '/file' + '/' + hash;
 	return {route: ruta};
 }
+*/
 
 function formatoScan(listaArch) {
 	return {
@@ -88,12 +95,18 @@ function formatoScan(listaArch) {
 	};
 }
 
+/*
+// no entiendo la definición de la interfaz
 function formatoFound(hash) {
 
 }
+*/
 
 function formatoStore(hash, info) {
-
+	return {
+		route: `/file/${hash}/store`,
+		body: info
+	};	
 }
 
 function formatoCount(cantNodos, cantArch) {
