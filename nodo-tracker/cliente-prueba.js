@@ -4,14 +4,16 @@ const ip = '127.0.0.1';
 const puerto = 9000;
 
 function formatoCount(cantNodos, cantArch) {
+	let route = '/count';
 	return {
-		route: '/count',
+		route,
 		body: {
-			nodeCount: cantNodos,
+			trackerCount: cantNodos,
 			fileCount: cantArch
 		}
 	};
 }
+
 var mensaje = formatoCount(20, 1000);
 var mensajeBuf = Buffer.from(JSON.stringify(mensaje));
 
