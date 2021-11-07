@@ -16,6 +16,11 @@ module.exports =
 
 		}
 
+		agregarArchivo(hash, name, size, pares) {
+			console.log('archivo agregado:');
+			console.log(`hash: ${hash} \nnombre: ${name}\ntamaño: ${size}, pares: ${pares}`);
+		}
+
 		getListaArchivos() {
 			//ejemplo
 			let id = '111'; let filename = 'arch3.txt'; let filesize = 1000;

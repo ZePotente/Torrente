@@ -110,7 +110,7 @@ function manejarMensajeTracker(mensajeJSON, tipo) {
 		break;
 		*/
 		case 4:
-			//manejarMensajeStore(mensajeJSON.body);
+			manejarMensajeStore(mensajeJSON);
 		break;
 		case 5: //el search que se procesa acá es del server
 			let hash = obtenerHash(mensajeJSON);
@@ -145,6 +145,14 @@ function obtenerHash(msj) {
 	rutaArr = msj.route.split("/");
 	let hash = rutaArr[1];
 	return hash;
+}
+
+function manejarMensajeStore(msg) {
+	let hash = obtenerHash(mensajeJSON);
+	if(miHT.isEnDominio(hash)) {
+		let body = msg.body;
+		miHT.agregarArchivo(body.id, body.filename, body.filesize, body.pares);
+	}
 }
 
 function transformarEnFound(mensajeJSON, hash) {
