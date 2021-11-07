@@ -104,14 +104,20 @@ function manejarMensajeTracker(mensajeJSON, tipo) {
 		case 2:
 			//manejarMensajeScan(mensajeJSON.body);
 		break;
+		/* nunca se recibe un found, porque el scan se transforma en found que se envía directo al server (originIP, originPort)
 		case 3:
 			//manejarMensajeFound(mensajeJSON.body);
 		break;
+		*/
 		case 4:
 			//manejarMensajeStore(mensajeJSON.body);
 		break;
-		case 5:
-			//manejarMensajeSearch(mensajeJSON.body);
+		case 5: //el search que se procesa acá es del server
+			let hash = obtenerHash(mensajeJSON);
+			if(miHT.isEnDominio(hash)) {
+				transformarEnFound(mensajeJSON, hash);  // podría verse que cambia el tipo del mensaje
+														// y con eso identificar que va al server
+			} // else, se lo pasa al que sigue
 		break;
 	}
 
@@ -121,6 +127,23 @@ function manejarMensajeTracker(mensajeJSON, tipo) {
 function manejarMensajeContar(msg) {
 	msg.body.trackerCount++;
 	msg.body.fileCount+= miHT.getCantidadArchivos();
+}
+
+function obtenerHash(msj) {
+	rutaArr = msj.route.split("/");
+	let hash = rutaArr[rutaArr.length-1];
+	return hash;
+}
+
+function transformarEnFound(mensajeJSON, hash) {
+	//pares = miHT.getPares(hash);
+	pares = []; //porque es para el server
+	mensajeJSON.body = {
+		id: hash,
+		trackerIP: config.server.ip,
+		trackerPort: config.server.puerto,
+		pares
+	};
 }
 /*
 // Formateo de mensajes de interfaz

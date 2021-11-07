@@ -14,7 +14,20 @@ function formatoCount(cantNodos, cantArch) {
 	};
 }
 
-var mensaje = formatoCount(20, 1000);
+function formatoSearch(hash) {
+	let route = '/file' + '/' + hash;
+		
+	return {
+		messageId: '1',
+		route,
+		originIP: '127.0.0.1',
+		originPort: 9999,
+		body: {}
+	};
+}
+
+//var mensaje = formatoCount(20, 1000);
+var mensaje = formatoSearch('1000');
 var mensajeBuf = Buffer.from(JSON.stringify(mensaje));
 
 const cliente = dgram.createSocket('udp4');

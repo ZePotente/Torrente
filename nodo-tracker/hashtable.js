@@ -22,6 +22,22 @@ module.exports =
 			//bucket.find(function())
 		}
 
+		getPares(hash) {
+			//ejemplo
+			let parIP = '127.0.0.1';
+			let parPort = 10000;
+			let pares = [{parIP, parPort}];
+			pares.push({parIP, parPort});
+			pares.push({parIP, parPort});
+			console.log('pares')
+			console.log(pares);
+			return pares;
+		}
+
+		isEnDominio(hash) {
+			return false;
+		}
+
 		getInicio() {
 			console.log(this.rango.inicio)
 			return this.rango.inicio;			
