@@ -11,72 +11,118 @@ function crearConfig(archivo) {
 	return JSON.parse(configString);
 }
 
-console.log(config.ant.ip);
-console.log(config.ant.puerto);
-console.log(config.sig.ip);
-console.log(config.sig.puerto);
+console.log(config);
 
+// DHT
+// Consideramos que el rango de la HT en un nodo va desde su id
+// hasta el anterior del id del nodo siguiente
+// o sea rango = [id, sig.id), y si el sig.id < id, pega la vuelta
+let HT = require('./hashtable.js');
+let inicio = config.id;
+let fin = config.sig.id;
+var miHT = new HT(inicio, fin);
 
 // Creacion del server
 const dgram = require('dgram');
 const server = dgram.createSocket('udp4'); //ipv4
 
+server.on('listening', function() {
+	console.log('Escuchando en el puerto: ' + config.server.puerto);
+});
+
 server.on('error', function(error) {
 	console.log('Hubo un error:');
 	console.log(error);
-})
+});
 // tener en cuenta que puede ser tanto de otro tracker o el server (A) como de un par (C)
 server.on('message', function(msg, rinfo) {
-	console.log('Se recibió un mensaje:');
-	console.log(msg); //objeto JSON
-	console.log('rinfo:');
-	console.log(rinfo);
+	mensajeJSON = armarMensajeJSON(msg);
+	imprimirMensaje(msg, rinfo, mensajeJSON);
 
-	mensaje = armarMensajeEntrante(msg); //habría que ver qué pasa si es muy grande y se manda en varios buffers
-	console.log('mensaje:');
-	console.log(mensaje);
-	manejarMensajeTracker(mensaje);
-
-	//TODO probar los formateos y el agregado del extra
-});
-
-server.on('listening', function() {
-	console.log('Escuchando en el puerto' + config.server.puerto);
+	// TODO revisar el messageID para ver si este nodo es el inicial
+	// por ahora supone que el mensaje es nuevo
+	respuesta = manejarMensajeTracker(mensajeJSON, tipoMensaje(mensajeJSON.route));
+	imprimirRespuesta(respuesta);
+	enviarRespuesta(respuesta);
 });
 
 server.bind(config.server.puerto);
 
-function armarMensajeEntrante(msg) {
-	return msg.toString();
+// por si hay que hacer algo más que simplemente un toString()
+// si es muy grande y se manda en varios buffers
+function armarMensajeJSON(msg) {
+	mensaje = msg.toString();
+	mensajeJSON = JSON.parse(mensaje);
+	return mensajeJSON;
 }
 
+function imprimirMensaje(msg, rinfo, mensaje) {
+	console.log('Se recibió un mensaje:');
+	console.log('msg');
+	console.log(msg); //objeto JSON
+	console.log('rinfo:');
+	console.log(rinfo);
+	console.log('mensaje:');
+	console.log(mensaje);
+}
+
+function imprimirRespuesta(resp) {
+	console.log('Respuesta a enviar: ');
+	console.log(resp);
+}
 // Manejo de mensajes del server UDP
 
-// Recibe el *string* del mensaje y lo manda a la función que se encargue de ese tipo de mensaje
-function manejarMensajeTracker(mensaje) {
-	mensajeJSON = JSON.parse(mensaje);
-	ruta = mensajeJSON.route;
-	//TODO implementar con callbacks probablemente
-	rutaArr = ruta.split("/");
-	switch(rutaArr[rutaArr.size-1]) {
+function tipoMensaje(ruta) {
+	let rutaArr = ruta.split("/");
+	switch(rutaArr[rutaArr.length-1]) {
 		case 'count':
-			//manejarMensajeContar(mensajeJSON.body);
+			tipo = 1;
 		break;
 		case 'scan':
-			//manejarMensajeScan(mensajeJSON.body);
+			tipo = 2;
 		break;
 		case 'found':
-			//manejarMensajeFound(mensajeJSON.body);
+			tipo = 3;
 		break;
 		case 'store':
-			//manejarMensajeStore(mensajeJSON.body);
+			tipo = 4;
 		break;
 		default: // es el hash
+			tipo = 5;
+		break;
+	}
+	console.log('tipo = ', tipo);
+	return tipo;
+}
+
+// Recibe el *string* del mensaje y lo manda a la función que se encargue de ese tipo de mensaje
+function manejarMensajeTracker(mensajeJSON, tipo) {
+	switch(tipo) {
+		case 1:
+			manejarMensajeContar(mensajeJSON);
+		break;
+		case 2:
+			//manejarMensajeScan(mensajeJSON.body);
+		break;
+		case 3:
+			//manejarMensajeFound(mensajeJSON.body);
+		break;
+		case 4:
+			//manejarMensajeStore(mensajeJSON.body);
+		break;
+		case 5:
 			//manejarMensajeSearch(mensajeJSON.body);
 		break;
 	}
+
+	return mensajeJSON; //llegado el caso se podría clonar y devolver el clon modificado, en vez de modificar el propio mensaje
 }
 
+function manejarMensajeContar(msg) {
+	msg.body.trackerCount++;
+	msg.body.fileCount+= miHT.getCantidadArchivos();
+}
+/*
 // Formateo de mensajes de interfaz
 
 function formatoSearch(hash) {
@@ -145,5 +191,4 @@ function crearExtras(messageID, originIP, originPort) {
 		originPort
 	};
 }
-// DHT
-var parteHT = {};
+*/
