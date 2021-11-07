@@ -43,7 +43,7 @@ server.on('message', function(msg, rinfo) {
 	// por ahora supone que el mensaje es nuevo
 	respuesta = manejarMensajeTracker(mensajeJSON, tipoMensaje(mensajeJSON.route));
 	imprimirRespuesta(respuesta);
-	enviarRespuesta(respuesta);
+	//enviarRespuesta(respuesta);
 });
 
 server.bind(config.server.puerto);
