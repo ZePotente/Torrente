@@ -28,7 +28,9 @@ function formatoSearch(hash) {
 		body: {}
 	};
 }
+var mensaje = formatoSearch('1000');
 
+/*
 function formatoStore(hash, info) {
 	return {
 		route: `/file/${hash}/store`,
@@ -51,7 +53,7 @@ let info = {
 	}]
 }
 var mensaje = formatoStore(info.id, info);
-
+*/
 /*
 function formatoScan(listaArch) {
 	let route = '/scan';

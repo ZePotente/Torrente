@@ -113,11 +113,7 @@ function manejarMensajeTracker(mensajeJSON, tipo) {
 			manejarMensajeStore(mensajeJSON);
 		break;
 		case 5: //el search que se procesa acá es del server
-			let hash = obtenerHash(mensajeJSON);
-			if(miHT.isEnDominio(hash)) {
-				transformarEnFound(mensajeJSON, hash);  // podría verse que cambia el tipo del mensaje
-														// y con eso identificar que va al server
-			} // else, se lo pasa al que sigue
+			manejarMensajeSearch(mensajeJSON);
 		break;
 	}
 
@@ -141,8 +137,8 @@ function manejarMensajeScan(msg) {
 	//console.log(JSON.stringify(msg));
 }
 
-function obtenerHash(msj) {
-	rutaArr = msj.route.split("/");
+function obtenerHash(msg) {
+	rutaArr = msg.route.split("/");
 	let hash = rutaArr[1];
 	return hash;
 }
@@ -153,6 +149,15 @@ function manejarMensajeStore(msg) {
 		let body = msg.body;
 		miHT.agregarArchivo(body.id, body.filename, body.filesize, body.pares);
 	}
+}
+
+function manejarMensajeSearch(mensajeJSON) {
+	let hash = obtenerHash(mensajeJSON);
+	
+	if(miHT.isEnDominio(hash)) {
+		transformarEnFound(mensajeJSON, hash);  // podría verse que cambia el tipo del mensaje
+												// y con eso identificar que va al server
+	} // else, se lo pasa al que sigue
 }
 
 function transformarEnFound(mensajeJSON, hash) {
