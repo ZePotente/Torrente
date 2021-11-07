@@ -1,12 +1,14 @@
 {
-"id-tracker": 1,
+"id":"05",
 "server":{
     "puerto":9000},
 "ant":{
     "ip":"127.0.0.1",
-    "puerto":8080},
+    "puerto":8080,
+    "id":"00"},
 "sig":{
     "ip":"127.0.0.1",
-    "puerto":8000}
+    "puerto":8000,
+    "id":"08"}
 }
 
