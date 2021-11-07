@@ -102,7 +102,7 @@ function manejarMensajeTracker(mensajeJSON, tipo) {
 			manejarMensajeContar(mensajeJSON);
 		break;
 		case 2:
-			//manejarMensajeScan(mensajeJSON.body);
+			manejarMensajeScan(mensajeJSON);
 		break;
 		/* nunca se recibe un found, porque el scan se transforma en found que se envía directo al server (originIP, originPort)
 		case 3:
@@ -129,9 +129,21 @@ function manejarMensajeContar(msg) {
 	msg.body.fileCount+= miHT.getCantidadArchivos();
 }
 
+function manejarMensajeScan(msg) {
+	let files = miHT.getListaArchivos();
+	//si viene directo del server, el body es undefined
+	if (msg.body === undefined) {
+		msg.body = {files:[]};
+	}
+	files.forEach(function(value, index) {
+		msg.body.files.push(value);
+	});
+	//console.log(JSON.stringify(msg));
+}
+
 function obtenerHash(msj) {
 	rutaArr = msj.route.split("/");
-	let hash = rutaArr[rutaArr.length-1];
+	let hash = rutaArr[1];
 	return hash;
 }
 

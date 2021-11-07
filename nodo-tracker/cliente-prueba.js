@@ -26,8 +26,22 @@ function formatoSearch(hash) {
 	};
 }
 
+function formatoScan(listaArch) {
+	let route = '/scan';
+	return {
+		route,
+		body: {
+			files: listaArch
+		}
+	};
+}
+
+let id = '11'; let filename = 'arch1.txt'; let filesize = 1000;
+var listaArch = [{id, filename, filesize}];
+id = '12'; filename = 'arch2.txt'; filesize = 1002;
+listaArch.push({id, filename, filesize});
 //var mensaje = formatoCount(20, 1000);
-var mensaje = formatoSearch('1000');
+var mensaje = formatoScan(listaArch);
 var mensajeBuf = Buffer.from(JSON.stringify(mensaje));
 
 const cliente = dgram.createSocket('udp4');

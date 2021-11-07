@@ -16,6 +16,15 @@ module.exports =
 
 		}
 
+		getListaArchivos() {
+			//ejemplo
+			let id = '111'; let filename = 'arch3.txt'; let filesize = 1000;
+			let listaArch = [{id, filename, filesize}];
+			console.log('lista de archivos:');
+			console.log(listaArch);
+			return listaArch;
+		}
+
 		existe(hash) {
 			var indice = hash.slice(0,2);
 			bucket = this.tabla[indice];
@@ -29,7 +38,7 @@ module.exports =
 			let pares = [{parIP, parPort}];
 			pares.push({parIP, parPort});
 			pares.push({parIP, parPort});
-			console.log('pares')
+			console.log('pares');
 			console.log(pares);
 			return pares;
 		}
