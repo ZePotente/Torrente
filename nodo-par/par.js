@@ -1,10 +1,23 @@
-//TODO Leer puerto para el server TCP de la config
-//El límite es archivos de medio GiB por la forma de mandarlo.
 const fs = require('fs');
+
+// Configuracion
+const configFile = 'config.json'; //se hardcodea el nombre de la config.
+const config = crearConfig(configFile);
+
+function crearConfig(archivo) {
+	const configBuffer = fs.readFileSync(archivo); //por ahora sync porque es lo mismo
+	const configString = configBuffer.toString();
+
+	return JSON.parse(configString);
+}
+
+console.log(config);
+
+//El límite es archivos de medio GiB por la forma de mandarlo.
 // Interfaz D P2P, TCP entre pares
 const net = require('net');
 // -- Servidor --
-const puerto = 9998// = config.puerto;
+const puerto = config.puertoTCP;
 const server = net.createServer(function(socket) {
 	console.log('Se recibio una conexión de otro par.');
 	socket.on('data', function(data) {
