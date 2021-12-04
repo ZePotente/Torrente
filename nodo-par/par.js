@@ -12,14 +12,16 @@ function crearConfig(archivo) {
 }
 
 console.log(config);
+
+const net = require('net');
 /*
 //El límite es archivos de medio GiB por la forma de mandarlo.
 // Interfaz D P2P, TCP entre pares
-const net = require('net');
+//const net = require('net');
 
 // -- Servidor --
 const puertoTCP = config.puertoTCP;
-const server = net.createServer(function(socket) {
+const serverTCP = net.createServer(function(socket) {
 	console.log('Se recibio una conexión de otro par.');
 	socket.on('data', function(data) {
 		let mensaje = JSON.parse(data.toString());
@@ -40,45 +42,44 @@ const server = net.createServer(function(socket) {
 	});
 });
 
-server.listen(puertoTCP);
+serverTCP.listen(puertoTCP);
 console.log('Escuchando en el puerto ' + puertoTCP);
-
-// -- Cliente --
-
-
-const puerto2 = 9999; const ip = '127.0.0.1';
-const client = net.createConnection(puerto2, ip);
-const hash = 'ffffffffffffffffffffffffff';
-let nombreArch = 'elarchivo.txt';
-
-let mensaje = {
-	type: "GET FILE",
-	hash
-};
-let archivo = '';
-client.on('connect', function() {
-	console.log('Conexión establecida con el servidor del par.');
-	client.write(JSON.stringify(mensaje));
-	console.log('Mensaje enviado.');
-});
-
-client.on('data', function(data) {
-	archivo += data;
-});
-
-client.on('end', function() {
-	fs.writeFile(nombreArch, archivo, function (err) {
-  		if (err) throw err;
-  		console.log('El archivo se guardó correctamente.');
-	});
-	console.log('Fin de la conexion.');
-});
-
-client.on('error', function(error) {
-	console.log('Hubo un error en la conexión:');
-	console.log(error);
-});
 */
+// -- Cliente --
+function descargarArchivo(ip, puerto, hash, nombreArch) {
+	console.log('--Inicio de la funcion descargarArchivo--');
+	let mensaje = {
+		type:'GET FILE',
+		hash
+	};
+	let archivo = '';
+
+	const client = net.createConnection(puerto, ip);
+	client.on('connect', function() {
+		console.log('Conexión establecida con el servidor del par.');
+		client.write(JSON.stringify(mensaje));
+		console.log('Mensaje enviado.');
+	});
+
+	client.on('data', function(data) {
+		archivo += data;
+	});
+
+	client.on('end', function() {
+		fs.writeFile(nombreArch, archivo, function (err) {
+	  		if (err) throw err;
+	  		console.log('El archivo se guardó correctamente.');
+		});
+		console.log('Fin de la conexion.');
+	});
+
+	client.on('error', function(error) {
+		console.log('Hubo un error en la conexión:');
+		console.log(error);
+
+	});
+	console.log('--Fin de la funcion descargarArchivo--');
+}
 
 // Interfaz C UDP, con el Tracker
 // Creacion del server
@@ -95,11 +96,16 @@ server.on('error', function(error) {
 });
 // Respuesta del Tracker
 server.on('message', function(msg, rinfo) {
+	console.log('Hola');
 	mensajeJSON = armarMensajeJSON(msg);
 	imprimirMensaje(msg, rinfo, mensajeJSON);
 
 	// Llamar a la descarga del archivo (iterando el vector de pares)
-
+	let body = mensajeJSON.body;
+	//mensajeJSON.body.pares.forEach()
+	let i = 0;
+	let par = body.pares[i];
+	descargarArchivo(par.parIP, par.parPort, body.id, body.filename);
 });
 server.bind(config.puertoUDP);
 
@@ -130,7 +136,17 @@ console.log(torrente);
 // Prepara y envia la búsqueda
 search = formatoSearch(nextMId(), torrente.hash, torrente.trackerIP, torrente.trackerPort);
 console.log(search);
+mensajeUDP(search, torrente.trackerIP, torrente.trackerPort);
 
+function mensajeUDP(mensaje, ip, puerto) {
+	var mensajeBuf = Buffer.from(JSON.stringify(mensaje));
+	const cliente = dgram.createSocket('udp4');
+	cliente.send(mensajeBuf, puerto, ip);
+
+	//hay que ver bien cómo cerrarlo después de que se mande el mensaje
+	//porque el send es async si no me equivoco
+	setTimeout(function() {cliente.close();}, 50);
+}
 
 function levantarTorrente(archivo) {
 	const configBuffer = fs.readFileSync(archivo); //por ahora sync porque es lo mismo
