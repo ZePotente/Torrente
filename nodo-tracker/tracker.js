@@ -40,10 +40,31 @@ server.on('message', function(msg, rinfo) {
 	imprimirMensaje(msg, rinfo, mensajeJSON);
 
 	// TODO revisar el messageID para ver si este nodo es el inicial
+	let pasar = true;
 	// por ahora supone que el mensaje es nuevo
+	// if(pego la vuelta) {pasar = false; respuesta=larespuesta;} else manejarMensajeTracker.
 	respuesta = manejarMensajeTracker(mensajeJSON, tipoMensaje(mensajeJSON.route));
 	imprimirRespuesta(respuesta);
-	//enviarRespuesta(respuesta);
+	console.log('¿Lo pasa al nodo siguiente?'); console.log(pasar);
+	let puerto; let ip;
+	if (pasar) {
+		//respuesta al config.sig
+		puerto = config.sig.puerto;
+		ip = config.sig.ip;
+	} else {
+		//respuesta al origin/server
+		if (mensajeJSON.originPort == undefined) { //si no es origin, sino par.
+			puerto = mensajeJSON.parPort;
+			ip = mensajeJSON.parIP;
+		} else {
+			puerto = mensajeJSON.originPort;
+			ip = mensajeJSON.originIP;
+		}
+	}
+	const mensajeBuf = Buffer.from(JSON.stringify(respuesta));
+	const cliente = dgram.createSocket('udp4');
+	cliente.send(mensajeBuf, puerto, ip);
+	setTimeout(function() {cliente.close();}, 50); 
 });
 
 server.bind(config.server.puerto);
@@ -95,7 +116,8 @@ function tipoMensaje(ruta) {
 	return tipo;
 }
 
-// Recibe el *string* del mensaje y lo manda a la función que se encargue de ese tipo de mensaje
+// Recibe el mensaje y lo manda a la función que se encargue de ese tipo de mensaje
+// //Devuelve el mensaje, y si lo tiene que pasar al siguiente
 function manejarMensajeTracker(mensajeJSON, tipo) {
 	switch(tipo) {
 		case 1:
@@ -139,7 +161,7 @@ function manejarMensajeScan(msg) {
 
 function obtenerHash(msg) {
 	rutaArr = msg.route.split("/");
-	let hash = rutaArr[1];
+	let hash = rutaArr[2];
 	return hash;
 }
 
