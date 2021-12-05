@@ -165,78 +165,10 @@ function transformarEnFound(mensajeJSON, hash) {
 	pares = []; //porque es para el server
 	mensajeJSON.body = {
 		id: hash,
+		filename: 'asd.txt',
+		filesize: 1000,
 		trackerIP: config.server.ip,
 		trackerPort: config.server.puerto,
 		pares
 	};
 }
-/*
-// Formateo de mensajes de interfaz
-
-function formatoSearch(hash) {
-	let route = '/file' + '/' + hash;
-	
-	return {route};
-}
-
-function formatoFound(hash, id, ip, puerto) {
-	let route = '/file' + '/' + hash + '/found';
-	let body = {
-		id,
-		trackerIP: ip,
-		trackerPort: puerto
-	}
-	return {
-		route,
-		body
-	};
-}
-
-function formatoScan(listaArch) {
-	let route = '/scan';
-	return {
-		route,
-		body: {
-			files: listaArch
-		}
-	};
-}
-
-function formatoStore(hash, info) {
-	return {
-		route: `/file/${hash}/store`,
-		body: info
-	};
-}
-
-function formatoCount(cantNodos, cantArch) {
-	let route = '/count';
-	return {
-		route,
-		body: {
-			trackerCount: cantNodos,
-			fileCount: cantArch
-		}
-	};
-}
-
-function agregarExtras(mensaje, extras) {
-	//let extras = crearExtras(mID, oIP, oPort);
-	console.log('antes');
-	console.log(mensaje);
-	extras.forEach(function(i, val) {
-		mensaje.push(val);
-	})
-	console.log('despues');
-	console.log(mensaje);
-	return mensaje;
-}
-
-function crearExtras(messageID, originIP, originPort) {
-	return {
-		messageID,
-		originIP,
-		originPort
-	};
-}
-*/
