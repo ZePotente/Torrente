@@ -22,6 +22,14 @@ let inicio = config.nodo.id;
 let fin = config.sig.id;
 var miHT = new HT(inicio, fin);
 
+// Lista de mensajes pendientes (a los cuales el servidor está atento si los vuelve a recibir)
+// Tiene un array de messageIds
+let mensajesPend = [];
+
+// Cantidad de nodos y archivos
+let cantNodosGlobal = 1;
+let cantArchivosGlobal = miHT.getCantidadArchivos();
+
 // Creacion del server
 const dgram = require('dgram');
 const server = dgram.createSocket('udp4'); //ipv4
@@ -40,35 +48,49 @@ server.on('message', function(msg, rinfo) {
 	imprimirMensaje(msg, rinfo, mensajeJSON);
 
 	// TODO revisar el messageID para ver si este nodo es el inicial
-	let pasar = true;
 	// por ahora supone que el mensaje es nuevo
 	// if(pego la vuelta) {pasar = false; respuesta=larespuesta;} else manejarMensajeTracker.
 	respuesta = manejarMensajeTracker(mensajeJSON, tipoMensaje(mensajeJSON.route));
 	imprimirRespuesta(respuesta);
-	console.log('¿Lo pasa al nodo siguiente?'); console.log(pasar);
+	console.log('¿Lo pasa al nodo siguiente?'); console.log(respuesta.pasar);
+	
+	/* 	respuesta.pasar == true -> mensaje al siguiente
+		respuesta.pasar == false && es un Count -> el Count pegó toda la vuelta -> muestra datos generales
+		respuesta.pasar == false && NO es un Count -> mensaje al origin o al par según corresponda
+	*/
 	let puerto; let ip;
-	if (pasar) {
+	if (respuesta.pasar) {
 		//respuesta al config.sig
 		puerto = config.sig.puerto;
 		ip = config.sig.ip;
+		mensajeUDP(respuesta.mensajeJSON, ip, puerto);
 	} else {
-		//respuesta al origin/server
-		if (mensajeJSON.originPort == undefined) { //si no es origin, sino par.
-			puerto = mensajeJSON.parPort;
-			ip = mensajeJSON.parIP;
-		} else {
-			puerto = mensajeJSON.originPort;
-			ip = mensajeJSON.originIP;
+		if (tipoMensaje(respuesta.mensajeJSON.route) == 1) { //Es un Count que pegó la vuelta, no hay mensajeUDP a nadie
+			imprimirCount(respuesta.mensajeJSON.body);
+		} else { //respuesta al origin/server
+			if (mensajeJSON.originPort == undefined) { //si no es origin, sino que es par.
+				puerto = mensajeJSON.parPort;
+				ip = mensajeJSON.parIP;
+			} else {
+				puerto = mensajeJSON.originPort;
+				ip = mensajeJSON.originIP;
+			}
+			mensajeUDP(respuesta.mensajeJSON, ip, puerto);
 		}
 	}
-	const mensajeBuf = Buffer.from(JSON.stringify(respuesta));
-	const cliente = dgram.createSocket('udp4');
-	cliente.send(mensajeBuf, puerto, ip);
-	setTimeout(function() {cliente.close();}, 50); 
 });
 
 server.bind(config.nodo.puerto);
 
+function mensajeUDP(mensaje, ip, puerto) {
+	var mensajeBuf = Buffer.from(JSON.stringify(mensaje));
+	const cliente = dgram.createSocket('udp4');
+	cliente.send(mensajeBuf, puerto, ip);
+
+	//hay que ver bien cómo cerrarlo después de que se mande el mensaje
+	//porque el send es async si no me equivoco
+	setTimeout(function() {cliente.close();}, 50);
+}
 // por si hay que hacer algo más que simplemente un toString()
 // si es muy grande y se manda en varios buffers
 function armarMensajeJSON(msg) {
@@ -77,10 +99,25 @@ function armarMensajeJSON(msg) {
 	return mensajeJSON;
 }
 
-function imprimirMensaje(msg, rinfo, mensaje) {
+// Asigna los nuevos valores a las variables globales, y lo muestra por consola
+function imprimirCount() {
+	let promedioGlobal = cantArchivosGlobal/cantNodosGlobal;
+	console.log('--Actualización de cantidad de nodos y archivos--');
+	console.log('Antes:');
+	console.log(`Cantidad de nodos: ${cantNodosGlobal}\nCantidad global de archivos: ${cantArchivosGlobal}`);
+	console.log(`Promedio global de archivos: ${promedioGlobal}`);
+	cantNodosGlobal = respuesta.mensajeJSON.trackerCount;
+	cantArchivosGlobal = respuesta.mensajeJSON.fileCount;
+	console.log('Ahora');
+	console.log(`Cantidad de nodos: ${cantNodosGlobal}\nCantidad global de archivos: ${cantArchivosGlobal}`);
+	console.log(`Promedio global de archivos: ${promedioGlobal}`);
+
+	console.log(`Cantidad de archivos en este nodo: ${miHT.getCantidadArchivos()}`);
+}
+function imprimirMensaje(mens, rinfo, mensaje) {
 	console.log('Se recibió un mensaje:');
-	console.log('msg');
-	console.log(msg); //objeto JSON
+	console.log('mens');
+	console.log(mens); //objeto JSON
 	console.log('rinfo:');
 	console.log(rinfo);
 	console.log('mensaje:');
@@ -120,53 +157,73 @@ function tipoMensaje(ruta) {
 // Estas modifican el propio mensaje para devolver la respuesta
 // //Devuelve el mensaje, y si lo tiene que pasar al siguiente
 function manejarMensajeTracker(mensajeJSON, tipo) {
+	let pasar = true;
 	switch(tipo) {
 		case 1:
-			manejarMensajeContar(mensajeJSON);
+			pasar = manejarMensajeCount(mensajeJSON);
 		break;
 		case 2:
-			manejarMensajeScan(mensajeJSON);
+			pasar = manejarMensajeScan(mensajeJSON);
 		break;
 		case 3:
-			manejarMensajeAddPar(mensajeJSON);
+			pasar = manejarMensajeAddPar(mensajeJSON);
 		break;
 		case 4:
-			manejarMensajeStore(mensajeJSON);
+			pasar = manejarMensajeStore(mensajeJSON);
 		break;
-		case 5: //el search que se procesa acá es del server
-			manejarMensajeSearch(mensajeJSON);
+		case 5:
+			pasar = manejarMensajeSearch(mensajeJSON);
 		break;
 	}
 
-	return mensajeJSON; //llegado el caso se podría clonar y devolver el clon modificado, en vez de modificar el propio mensaje
+	return {mensajeJSON, pasar};
 }
 
-function manejarMensajeContar(msg) {
-	msg.body.trackerCount++;
-	msg.body.fileCount+= miHT.getCantidadArchivos();
-}
+function manejarMensajeCount(mens) {
+	let _pasar;
 
-function manejarMensajeScan(msg) {
-	let files = miHT.getListaArchivos();
-	//si viene directo del server, el body es undefined
-	if (msg.body === undefined) {
-		msg.body = {files:[]};
+	if(mensajesPend.includes(mens.messageId)) { // pegó la vuelta el count
+		_pasar = false; // no se lo tiene que devolver a nadie, esto se asegura en el server
+	} else { // es de otro
+		mens.body.trackerCount++;
+		mens.body.fileCount+= miHT.getCantidadArchivos();
+		_pasar = true;
 	}
-	files.forEach(function(value, index) {
-		msg.body.files.push(value);
-	});
-	//console.log(JSON.stringify(msg));
+	return _pasar;
 }
 
-function manejarMensajeAddPar(msg) {
-	let status = true;
-	let hash = msg.id;
+// Hace su propio scan la primera vez que le llega, no lo hace al pegar la vuelta.
+function manejarMensajeScan(mens) {
+	let _pasar;
+
+	if (mensajesPend.includes(mens.messageId)) {
+		_pasar = false;
+	} else {
+		if (mens.body === undefined) { //si viene directo del server, el body es undefined
+			mens.body = {files:[]};
+			mensajesPend.push(mens.messageId);
+		}
+		//tiene que tener{id, filename, filesize}
+		miHT.getListaArchivos().forEach(function(value, index) {
+			mens.body.files.push(value);
+		});
+		_pasar = true;
+	}
+	return _pasar;
+}
+
+function manejarMensajeAddPar(mens) {
+	let status;
+	let hash = mens.id;
+
 	if(miHT.existe(hash)) {
-		miHT.agregarPar(hash, msg.parIP, msg.parPort);
+		status = true;
+		miHT.agregarPar(hash, mens.parIP, mens.parPort);
 	} else {
 		status = false;
 	}
-	msg = mensajeConfirmar(msg.messageId, hash, 'store', status);
+	mens = mensajeConfirmar(mens.messageId, hash, 'store', status);
+	return false; // no lo pasa, lo devuelve al par
 }
 
 function mensajeConfirmar(mid, hash, stipo, status) {
@@ -178,39 +235,49 @@ function mensajeConfirmar(mid, hash, stipo, status) {
 	};
 }
 
-function obtenerHash(msg) {
-	rutaArr = msg.route.split("/");
+function manejarMensajeStore(mens) {
+	let body = mens.body;
+	let hash = body.id;
+	let _pasar;
+
+	if(miHT.isEnDominio(hash)) {
+		miHT.agregarArchivo(hash, body.filename, body.filesize, body.pares);
+		mens = mensajeConfirmar(mens.messageId, hash, 'store', true);
+		_pasar = false;
+	} else { 
+		_pasar = true;
+	}
+	return _pasar;
+}
+
+// Sólo para el Search
+function obtenerHash(mens) {
+	rutaArr = mens.route.split("/");
 	let hash = rutaArr[2];
 	return hash;
 }
-
-function manejarMensajeStore(msg) {
-	let body = msg.body;
-	let hash = body.id;
+function manejarMensajeSearch(mens) {
+	let hash = obtenerHash(mens);
+	let _pasar;
 	if(miHT.isEnDominio(hash)) {
-		miHT.agregarArchivo(hash, body.filename, body.filesize, body.pares);
-		msg = mensajeConfirmar(msg.messageId, hash, 'store', true);
-	} else { // pasar al nodo siguiente
-		
+		transformarEnFound(mens, hash);
+		_pasar = false;
+	} else {
+		_pasar = true;
 	}
+	return _pasar;
 }
 
-function manejarMensajeSearch(mensajeJSON) {
-	let hash = obtenerHash(mensajeJSON);
-	
-	if(miHT.isEnDominio(hash)) {
-		transformarEnFound(mensajeJSON, hash);  // podría verse que cambia el tipo del mensaje
-												// y con eso identificar que va al server
-	} // else, se lo pasa al que sigue
-}
-
-function transformarEnFound(mensajeJSON, hash) {
-	//pares = miHT.getPares(hash);
-	pares = []; //porque es para el server
-	mensajeJSON.body = {
+function transformarEnFound(mens, hash) {
+	pares = miHT.getPares(hash); 
+	// se supone que si viene del server no deberían mandarse los pares (porque cuál sería la gracia del .torrente), pero sí si viene del nodo par,
+	// pero no hay manera de saber de cuál viene, porque ambos son origin.
+	filename = miHT.getNombreArchivo(hash);
+	filesize = miHT.getSizeArchivo(hash);
+	mens.body = {
 		id: hash,
-		filename: 'asd.txt',
-		filesize: 1000,
+		filename,
+		filesize,
 		trackerIP: config.nodo.ip,
 		trackerPort: config.nodo.puerto,
 		pares

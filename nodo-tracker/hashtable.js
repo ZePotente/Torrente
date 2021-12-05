@@ -30,6 +30,14 @@ module.exports =
 			return listaArch;
 		}
 
+		getNombreArchivo(hash) {
+			return 'asd.txt';
+		}
+
+		getSizeArchivo(hash) {
+			return 1000;
+		}
+
 		existe(hash) {
 			var indice = hash.slice(0,2);
 			bucket = this.tabla[indice];
