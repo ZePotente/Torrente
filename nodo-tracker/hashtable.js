@@ -21,6 +21,7 @@ module.exports =
 			console.log(`hash: ${hash} \nnombre: ${name}\ntamaño: ${size}, pares: ${pares}`);
 		}
 
+		// Tiene que tener formato [{id, filename, filesize}] por eso tienen esos nombres
 		getListaArchivos() {
 			//ejemplo
 			let id = '111'; let filename = 'arch3.txt'; let filesize = 1000;
