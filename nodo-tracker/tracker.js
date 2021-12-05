@@ -18,7 +18,7 @@ console.log(config);
 // hasta el anterior del id del nodo siguiente
 // o sea rango = [id, sig.id), y si el sig.id < id, pega la vuelta
 let HT = require('./hashtable.js');
-let inicio = config.id;
+let inicio = config.nodo.id;
 let fin = config.sig.id;
 var miHT = new HT(inicio, fin);
 
@@ -27,7 +27,7 @@ const dgram = require('dgram');
 const server = dgram.createSocket('udp4'); //ipv4
 
 server.on('listening', function() {
-	console.log('Escuchando en el puerto: ' + config.server.puerto);
+	console.log('Escuchando en el puerto: ' + config.nodo.puerto);
 });
 
 server.on('error', function(error) {
@@ -67,7 +67,7 @@ server.on('message', function(msg, rinfo) {
 	setTimeout(function() {cliente.close();}, 50); 
 });
 
-server.bind(config.server.puerto);
+server.bind(config.nodo.puerto);
 
 // por si hay que hacer algo más que simplemente un toString()
 // si es muy grande y se manda en varios buffers
@@ -189,8 +189,8 @@ function transformarEnFound(mensajeJSON, hash) {
 		id: hash,
 		filename: 'asd.txt',
 		filesize: 1000,
-		trackerIP: config.server.ip,
-		trackerPort: config.server.puerto,
+		trackerIP: config.nodo.ip,
+		trackerPort: config.nodo.puerto,
 		pares
 	};
 }
