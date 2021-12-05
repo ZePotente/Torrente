@@ -1,4 +1,5 @@
 {
-"puertoTCP":"9999",
-"puertoUDP":"10000"
+	"ip":"127.0.0.1",
+	"puertoTCP":"9999",
+	"puertoUDP":"10000"
 }

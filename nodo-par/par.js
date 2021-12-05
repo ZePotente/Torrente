@@ -14,7 +14,7 @@ function crearConfig(archivo) {
 console.log(config);
 
 const net = require('net');
-/*
+
 //El límite es archivos de medio GiB por la forma de mandarlo.
 // Interfaz D P2P, TCP entre pares
 //const net = require('net');
@@ -44,7 +44,7 @@ const serverTCP = net.createServer(function(socket) {
 
 serverTCP.listen(puertoTCP);
 console.log('Escuchando en el puerto ' + puertoTCP);
-*/
+
 // -- Cliente --
 function descargarArchivo(ip, puerto, hash, nombreArch) {
 	console.log('--Inicio de la funcion descargarArchivo--');
@@ -130,13 +130,17 @@ function imprimirMensaje(msg, rinfo, mensaje) {
 // Parte Cliente UDP
 // Solicitud de los pares del archivo .torrente al tracker
 nombreArchTorrente = 'torrentito.torrente';
-// Busca el .torrente en el filesystem,
-torrente = levantarTorrente(nombreArchTorrente);
-console.log(torrente);
-// Prepara y envia la búsqueda
-search = formatoSearch(nextMId(), torrente.hash, torrente.trackerIP, torrente.trackerPort);
-console.log(search);
-mensajeUDP(search, torrente.trackerIP, torrente.trackerPort);
+pedirTorrente(nombreArchTorrente);
+
+function pedirTorrente(nombreTorrente) {
+	// Busca el .torrente en el filesystem,
+	torrente = levantarTorrente(nombreArchTorrente);
+	console.log(torrente);
+	// Prepara y envia la búsqueda
+	search = formatoSearch(nextMId(), torrente.hash, config.ip, config.puertoUDP);
+	console.log(search);
+	mensajeUDP(search, torrente.trackerIP, torrente.trackerPort);
+}
 
 function mensajeUDP(mensaje, ip, puerto) {
 	var mensajeBuf = Buffer.from(JSON.stringify(mensaje));
@@ -166,7 +170,7 @@ function formatoSearch(mid, hash, ip, puerto) {
 		messageId: mid,
 		route,
 		originIP: ip,
-		originPort: config.puertoUDP,
+		originPort: puerto,
 		body: {}
 	};
 }
