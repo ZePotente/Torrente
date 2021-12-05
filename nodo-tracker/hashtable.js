@@ -48,6 +48,10 @@ module.exports =
 			return pares;
 		}
 
+		agregarPar(hash, parIP, parPort) {
+			console.log('Se agrega al archivo con hash')
+		}
+
 		isEnDominio(hash) {
 			return false;
 		}
