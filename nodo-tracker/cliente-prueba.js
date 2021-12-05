@@ -1,12 +1,21 @@
 const dgram = require('dgram');
 
-const ip = '127.0.0.1';
-const puerto = 9000;
+const hash = 'afdddd';
+const mid = '1';
+const ipDest = '127.0.0.1';
+const puertoDest = 10001;
+const ipServer = '127.0.0.1'
+const puertoServer = 10002;
+const ipTracker = '127.0.0.1'
+const puertoTracker = 10003;
 
-/*
-function formatoCount(cantNodos, cantArch) {
+var mensaje = '';
+// cantNodos y cantArch serían 0
+// Sólo lo crea el tracker, no el Servidor http
+function formatoCount(mid, cantNodos, cantArch) {
 	let route = '/count';
 	return {
+		messageId: mid,
 		route,
 		body: {
 			trackerCount: cantNodos,
@@ -14,35 +23,59 @@ function formatoCount(cantNodos, cantArch) {
 		}
 	};
 }
-var mensaje = formatoCount(20, 1000);
-*/
 
-function formatoSearch(hash) {
+// ip y puerto son los del serverUDP del Servidor
+function formatoSearch(hash, mid, ip, puerto) {
 	let route = '/file' + '/' + hash;
 		
 	return {
-		messageId: '1',
+		messageId: mid,
 		route,
-		originIP: '127.0.0.1',
-		originPort: 9999,
+		originIP: ip,
+		originPort: puerto,
 		body: {}
 	};
 }
-var mensaje = formatoSearch('1000');
 
-/*
-function formatoStore(hash, info) {
+// Sólo lo envía el Tracker.
+// ip y puerto son los del serverUDP del Servidor
+// ipT y puertoT son los del serverUDP del Tracker
+function formatoFound(hash, mid, ip, puerto, filename, filesize, ipT, puertoT, pares) {
+	let route = '/file' + '/' + hash + '/found';
 	return {
-		route: `/file/${hash}/store`,
-		body: info
+  	messageId: mid,
+  	route,
+  	originIP: ip,
+  	originPort: puerto,
+  	body: {
+			id: hash,
+			filename,
+			filesize,
+			trackerIP: ipT,
+			trackerPort: puertoT,
+			pares
+		}
 	};
 }
-let hash = '1000'
-let info = {
-	id: hash,
-	filename: 'EishOfEmpaiersChu.exe',
-	filesize: 1000000,
-	pares: [
+
+// ip y puerto son los del serverUDP del Servidor
+// Pares es un vector de {parIP, parPort} (con esos nombres)
+function formatoStore(hash, mid, ip, puerto, filename, filesize, pares) {
+	return {
+		messageId: mid,
+		route: `/file/${hash}/store`,
+		originIP: ip,
+		originPort: puerto,
+		body: {
+			id: hash,
+			filename,
+			filesize,
+			pares
+		}
+	};
+}
+// Ejemplo de pares
+let pares = [
 	{
 		parIP:'127.0.0.1',
 		parPort:5000
@@ -50,33 +83,53 @@ let info = {
 	{
 		parIP:'127.0.0.1',
 		parPort:5001
-	}]
-}
-var mensaje = formatoStore(info.id, info);
-*/
-/*
-function formatoScan(listaArch) {
+	}];
+
+// ip y puerto son las del serverUDP del Servidor
+// files es un vector de {id, filename, filesize} (con esos nombres)
+function formatoScan(mid, ip, puerto, files) {
 	let route = '/scan';
 	return {
+		messageId: mid,
 		route,
+		originIP: ip,
+		originPort: puerto,
 		body: {
-			files: listaArch
+			files
 		}
 	};
 }
+// Ejemplo de files
 let id = '11'; let filename = 'arch1.txt'; let filesize = 1000;
 var listaArch = [{id, filename, filesize}];
 id = '12'; filename = 'arch2.txt'; filesize = 1002;
 listaArch.push({id, filename, filesize});
-var mensaje = formatoScan(listaArch);
-*/
 
-var mensajeBuf = Buffer.from(JSON.stringify(mensaje));
+mensajeCount = formatoCount(mid, 0, 0);
+mensajeSearch = formatoSearch(hash, mid, ipServer, puertoServer);
+mensajeFound = formatoFound(hash, mid, ipServer, puertoServer, filename, filesize, ipTracker, puertoTracker, pares);
+mensajeStore = formatoStore(hash, mid, ipServer, puertoServer, filename, filesize, pares);
+mensajeScan = formatoScan(mid, ipServer, puertoServer, listaArch);
 
-const cliente = dgram.createSocket('udp4');
+// Como objetos
+console.log(mensajeCount);
+console.log(mensajeSearch);
+console.log(mensajeFound);
+console.log(mensajeStore);
+console.log(mensajeScan);
+// Como JSON
+console.log(JSON.stringify(mensajeCount));
+console.log(JSON.stringify(mensajeSearch));
+console.log(JSON.stringify(mensajeFound));
+console.log(JSON.stringify(mensajeStore));
+console.log(JSON.stringify(mensajeScan));
+//mensajeUDP(mensaje, ipDest, puertoDest);
+function mensajeUDP(mensaje, ip, puerto) {
+	var mensajeBuf = Buffer.from(JSON.stringify(mensaje));
+	const cliente = dgram.createSocket('udp4');
+	cliente.send(mensajeBuf, puerto, ip);
 
-cliente.send(mensajeBuf, puerto, ip);
-
-//hay que ver bien cómo cerrarlo después de que se mande el mensaje
-//porque el send es async si no me equivoco
-setTimeout(function() {cliente.close();}, 50); 
+	//hay que ver bien cómo cerrarlo después de que se mande el mensaje
+	//porque el send es async si no me equivoco
+	setTimeout(function() {cliente.close();}, 50);
+}
