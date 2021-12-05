@@ -102,7 +102,7 @@ function tipoMensaje(ruta) {
 		case 'scan':
 			tipo = 2;
 		break;
-		case 'found':
+		case 'addPar':
 			tipo = 3;
 		break;
 		case 'store':
@@ -117,6 +117,7 @@ function tipoMensaje(ruta) {
 }
 
 // Recibe el mensaje y lo manda a la función que se encargue de ese tipo de mensaje
+// Estas modifican el propio mensaje para devolver la respuesta
 // //Devuelve el mensaje, y si lo tiene que pasar al siguiente
 function manejarMensajeTracker(mensajeJSON, tipo) {
 	switch(tipo) {
@@ -126,11 +127,9 @@ function manejarMensajeTracker(mensajeJSON, tipo) {
 		case 2:
 			manejarMensajeScan(mensajeJSON);
 		break;
-		/* nunca se recibe un found, porque el scan se transforma en found que se envía directo al server (originIP, originPort)
 		case 3:
-			//manejarMensajeFound(mensajeJSON.body);
+			manejarMensajeAddPar(mensajeJSON);
 		break;
-		*/
 		case 4:
 			manejarMensajeStore(mensajeJSON);
 		break;
@@ -159,6 +158,26 @@ function manejarMensajeScan(msg) {
 	//console.log(JSON.stringify(msg));
 }
 
+function manejarMensajeAddPar(msg) {
+	let status = true;
+	let hash = msg.id;
+	if(miHT.existe(hash)) {
+		miHT.agregarPar(hash, msg.parIP, msg.parPort);
+	} else {
+		status = false;
+	}
+	msg = mensajeConfirmar(msg.messageId, hash, 'store', status);
+}
+
+function mensajeConfirmar(mid, hash, stipo, status) {
+	let route = '/file/' + hash + '/' + stipo;
+	return {
+		messageId: mid,
+		route,
+		status
+	};
+}
+
 function obtenerHash(msg) {
 	rutaArr = msg.route.split("/");
 	let hash = rutaArr[2];
@@ -166,10 +185,13 @@ function obtenerHash(msg) {
 }
 
 function manejarMensajeStore(msg) {
-	let hash = obtenerHash(mensajeJSON);
+	let body = msg.body;
+	let hash = body.id;
 	if(miHT.isEnDominio(hash)) {
-		let body = msg.body;
-		miHT.agregarArchivo(body.id, body.filename, body.filesize, body.pares);
+		miHT.agregarArchivo(hash, body.filename, body.filesize, body.pares);
+		msg = mensajeConfirmar(msg.messageId, hash, 'store', true);
+	} else { // pasar al nodo siguiente
+		
 	}
 }
 

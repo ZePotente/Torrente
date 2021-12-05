@@ -96,18 +96,36 @@ server.on('error', function(error) {
 });
 // Respuesta del Tracker
 server.on('message', function(msg, rinfo) {
-	console.log('Hola');
 	mensajeJSON = armarMensajeJSON(msg);
 	imprimirMensaje(msg, rinfo, mensajeJSON);
-
-	// Llamar a la descarga del archivo (iterando el vector de pares)
-	let body = mensajeJSON.body;
-	//mensajeJSON.body.pares.forEach()
-	let i = 0;
-	let par = body.pares[i];
-	descargarArchivo(par.parIP, par.parPort, body.id, body.filename);
+	
+	if (isMensajeFound(mensajeJSON.route)) {
+		console.log('Se recibio respuesta del tracker por una peticion de pares del .torrente');
+		// Iniciar conexión TCP con el par que tiene el archivo
+		// (iterar el vector de pares)
+		let body = mensajeJSON.body;
+		//mensajeJSON.body.pares.forEach()...
+		let i = 0;
+		let par = body.pares[i];
+		descargarArchivo(par.parIP, par.parPort, body.id, body.filename);
+	} else { //es addPar
+		console.log('Se recibio respuesta del tracker por un addPar.');
+	}
 });
 server.bind(config.puertoUDP);
+
+function isMensajeFound(ruta) {
+	let rutaArr = ruta.split("/");
+	let last = rutaArr.length-1;
+	let tipo;
+	if(rutaArr[last] == 'found') {
+		tipo = true;
+	} else if(rutaArr[last] == 'store' || rutaArr[last] == 'addPar') {
+		tipo = false;
+	}
+	console.log('tipo = ', tipo);
+	return tipo;
+}
 
 // por si hay que hacer algo más que simplemente un toString()
 // si es muy grande y se manda en varios buffers
@@ -128,10 +146,17 @@ function imprimirMensaje(msg, rinfo, mensaje) {
 }
 
 // Parte Cliente UDP
-// Solicitud de los pares del archivo .torrente al tracker
 nombreArchTorrente = 'torrentito.torrente';
 pedirTorrente(nombreArchTorrente);
 
+archivo = {
+	hash: 'asd',
+	nombre: 'asd.txt',
+	tam: 1000
+}
+pedirAgregarPar(archivo);
+
+// Solicitud de los pares del archivo .torrente al tracker
 function pedirTorrente(nombreTorrente) {
 	// Busca el .torrente en el filesystem,
 	torrente = levantarTorrente(nombreArchTorrente);
@@ -172,5 +197,23 @@ function formatoSearch(mid, hash, ip, puerto) {
 		originIP: ip,
 		originPort: puerto,
 		body: {}
+	};
+}
+
+function pedirAgregarPar(archivo, tip, tpuerto) {
+	addPar = formatoAddPar(nextMId(), archivo, config.ip, config.puertoUDP);
+	console.log(addPar);
+	mensajeUDP(search, tip, tpuerto);
+}
+function formatoAddPar(mid, archivo, ip, puerto) {
+	let route = '/file' + '/' + archivo.hash + '/addPar';
+	return {
+		messageId: mid,
+		route,
+		id: archivo.hash,
+		filename: archivo.nombre,
+		filesize: archivo.tam,
+		parIP: ip,
+		parPort: puerto
 	};
 }
