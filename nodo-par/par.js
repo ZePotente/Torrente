@@ -12,6 +12,24 @@ function crearConfig(archivo) {
 	return JSON.parse(configString);
 }
 
+class Seeds {
+	constructor() {
+		this.archivos = new Map();
+	}
+
+	putArchivo(hash, filename) {
+		this.archivos.set(hash, []);
+	}
+
+	getArchivo(hash) {
+		return this.archivos.get(hash);
+	}
+
+	getSize() {
+		return this.archivos.size;
+	}
+}
+
 //El límite es archivos de medio GiB por la forma de mandarlo.
 // Interfaz D P2P, TCP entre pares
 const net = require('net');
@@ -20,8 +38,7 @@ const serverTCP = net.createServer(function(socket) {
 	console.log('Se recibio una conexión de otro par.');
 	socket.on('data', function(data) {
 		let mensaje = JSON.parse(data.toString());
-		nombreArch = 'asd.txt';
-		//nombreArch = buscar(mensaje.hash);
+		nombreArch = seedArchivos.getArchivo(mensaje.hash); // colección de archivos global
 		fs.readFile(nombreArch, 'utf8', function(err, data) {
 			if (err) throw err;
 			socket.end(data);
@@ -204,6 +221,15 @@ function formatoAddPar(mid, infoarchivo, ip, puerto) {
 	};
 }
 
+function agregarArchivo(filename) {
+	//(await fs.promises.stat(file)).size
+	let stats = fs.statSync("filename");
+	let filesize = stats["size"];
+	let concat = filename+filesize;
+	let hash = crypto.createHash('sha1').update(concat).digest('hex');
+	seedArchivos.putArchivo(hash, filename); // colección de archivos global
+}
+
 // CLI
 console.log('Configurando...');
 console.log('Archivo de configuración:');
@@ -212,8 +238,8 @@ serverTCP.listen(config.puertoTCP);
 console.log('Servidor TCP escuchando en el puerto ' + config.puertoTCP);
 server.bind(config.puertoUDP);
 console.log('Servidor UDP escuchando en el puerto ' + config.puertoUDP);
+let seedArchivos = new Seeds();
 console.log('Fin de configuración.');
-//levantar configuración y abrir servidores y eso
 //
 const readline = require('readline');
 const rl = readline.createInterface({input: process.stdin,output: process.stdout});
