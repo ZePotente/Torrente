@@ -1,133 +1,134 @@
-class HT {
-	constructor(inicio, fin) {
-		this.rango = {inicio, fin};
-		this.tabla = new Map();
-		this.max = 'ff';
-		this.min = '00';
-	}
-
-	getIndice(hash) {
-		return hash.slice(0,2);
-	}
-
-	agregarArchivo(hash, name, size, pares) {
-		let body = {
-			id: hash,
-			filename: name,
-			filesize: size,
-			pares
-		};
-		let indice = this.getIndice(hash);
-		if (this.tabla.get(indice) == undefined) { //no hay archivos en ese indice
-			this.tabla.set(indice, []);
+module exports = 
+	class HT {
+		constructor(inicio, fin) {
+			this.rango = {inicio, fin};
+			this.tabla = new Map();
+			this.max = 'ff';
+			this.min = '00';
 		}
-		this.tabla.get(indice).push(body);
-		console.log(JSON.stringify(this.tabla.get(indice)));
-		/*
-		arrayArchivos.forEach(function (index, value) {
-			value.hash = hash
-		});
-		*/
-	}
 
-	// Tiene que tener formato [{id, filename, filesize}] por eso tienen esos nombres
-	getListaArchivos() {
-		let listaArch = [];
-		this.tabla.forEach(function(value, key) {
-			for(let i = 0; i < value.length; i++) {
-				let id = value[i].id;
-				let filename = value[i].filename;
-				let filesize = value[i].filesize;
-				listaArch.push({id, filename, filesize});
+		getIndice(hash) {
+			return hash.slice(0,2);
+		}
+
+		agregarArchivo(hash, name, size, pares) {
+			let body = {
+				id: hash,
+				filename: name,
+				filesize: size,
+				pares
+			};
+			let indice = this.getIndice(hash);
+			if (this.tabla.get(indice) == undefined) { //no hay archivos en ese indice
+				this.tabla.set(indice, []);
 			}
-		});
-		return listaArch;
-	}
+			this.tabla.get(indice).push(body);
+			console.log(JSON.stringify(this.tabla.get(indice)));
+			/*
+			arrayArchivos.forEach(function (index, value) {
+				value.hash = hash
+			});
+			*/
+		}
 
-	existe(hash) {
-		let indice = this.getIndice(hash);
-		let arrayArchivos = this.tabla.get(indice);
-		if (arrayArchivos == undefined) {
-			return false;
-		} else {
-			let i = 0; let len = arrayArchivos.length;
-			while (i < len && arrayArchivos[i].id != hash) {
+		// Tiene que tener formato [{id, filename, filesize}] por eso tienen esos nombres
+		getListaArchivos() {
+			let listaArch = [];
+			this.tabla.forEach(function(value, key) {
+				for(let i = 0; i < value.length; i++) {
+					let id = value[i].id;
+					let filename = value[i].filename;
+					let filesize = value[i].filesize;
+					listaArch.push({id, filename, filesize});
+				}
+			});
+			return listaArch;
+		}
+
+		existe(hash) {
+			let indice = this.getIndice(hash);
+			let arrayArchivos = this.tabla.get(indice);
+			if (arrayArchivos == undefined) {
+				return false;
+			} else {
+				let i = 0; let len = arrayArchivos.length;
+				while (i < len && arrayArchivos[i].id != hash) {
+					i++;
+				}
+				return i < len;
+			}
+		}
+
+		//Precondición: el archivo está en la HT (existe(hash))
+		getNombreSizeArchivo(hash) {
+			let indice = this.getIndice(hash);
+			let arrayArchivos = this.tabla.get(indice);
+			let i = 0;
+			while (i < arrayArchivos.length && arrayArchivos[i].id != hash) {
 				i++;
 			}
-			return i < len;
-		}
-	}
 
-	//Precondición: el archivo está en la HT (existe(hash))
-	getNombreSizeArchivo(hash) {
-		let indice = this.getIndice(hash);
-		let arrayArchivos = this.tabla.get(indice);
-		let i = 0;
-		while (i < arrayArchivos.length && arrayArchivos[i].id != hash) {
-			i++;
+			return {filename: arrayArchivos[i].filename, filesize: arrayArchivos[i].filesize};
 		}
 
-		return {filename: arrayArchivos[i].filename, filesize: arrayArchivos[i].filesize};
-	}
+		//Precondición: el archivo está en la HT (existe(hash))
+		getPares(hash) {
+			let indice = this.getIndice(hash);
+			let arrayArchivos = this.tabla.get(indice);
 
-	//Precondición: el archivo está en la HT (existe(hash))
-	getPares(hash) {
-		let indice = this.getIndice(hash);
-		let arrayArchivos = this.tabla.get(indice);
-
-		let i = 0;
-		while (i < arrayArchivos.length && arrayArchivos[i].id != hash) {
-			i++;
+			let i = 0;
+			while (i < arrayArchivos.length && arrayArchivos[i].id != hash) {
+				i++;
+			}
+			return arrayArchivos[i].pares;
 		}
-		return arrayArchivos[i].pares;
-	}
 
-	//Precondición: el archivo está en la HT (existe(hash))
-	agregarPar(hash, parIP, parPort) {
-		let indice = this.getIndice(hash);
-		let arrayArchivos = this.tabla.get(indice);
+		//Precondición: el archivo está en la HT (existe(hash))
+		agregarPar(hash, parIP, parPort) {
+			let indice = this.getIndice(hash);
+			let arrayArchivos = this.tabla.get(indice);
 
-		let i = 0;
-		while (i < arrayArchivos.length && arrayArchivos[i].id != hash) {
-			i++;
+			let i = 0;
+			while (i < arrayArchivos.length && arrayArchivos[i].id != hash) {
+				i++;
+			}
+			let par = {parIP, parPort};
+			console.log(arrayArchivos);
+			arrayArchivos[i].pares.push(par);
 		}
-		let par = {parIP, parPort};
-		console.log(arrayArchivos);
-		arrayArchivos[i].pares.push(par);
-	}
 
-	isEnDominio(hash) {
-		let indice = this.getIndice(hash);
+		isEnDominio(hash) {
+			let indice = this.getIndice(hash);
 
-		let ini = this.rango.inicio;
-		let fin = this.rango.fin;
-		if (fin < ini) { //si pega la vuelta, indice pertenece a [ini;max] U [min;fin)
-			return (indice >= ini && indice <= this.max) || (indice >= this.min && indice < fin);
-		} else { //indice pertenece a [ini;fin)
-			return indice >= ini && indice < fin;
+			let ini = this.rango.inicio;
+			let fin = this.rango.fin;
+			if (fin < ini) { //si pega la vuelta, indice pertenece a [ini;max] U [min;fin)
+				return (indice >= ini && indice <= this.max) || (indice >= this.min && indice < fin);
+			} else { //indice pertenece a [ini;fin)
+				return indice >= ini && indice < fin;
+			}
 		}
-	}
 
-	getInicio() {
-		return this.rango.inicio;			
-	}
+		getInicio() {
+			return this.rango.inicio;			
+		}
 
-	getFin() {
-		return this.rango.fin;
-	}
+		getFin() {
+			return this.rango.fin;
+		}
 
-	setFin(fin) {
-		this.rango.fin = fin;
-	}
+		setFin(fin) {
+			this.rango.fin = fin;
+		}
 
-	getCantidadArchivos() {
-		let cant = 0;
-		this.tabla.forEach(function(value, key) {
-			cant += value.length; //suma la cantidad de archivos en cada índice
-		});
-		return cant;
-	}
-};
+		getCantidadArchivos() {
+			let cant = 0;
+			this.tabla.forEach(function(value, key) {
+				cant += value.length; //suma la cantidad de archivos en cada índice
+			});
+			return cant;
+		}
+	};
 /*
 let asd = new HT('f0', '03');
 let hash = 'f21230123123';
