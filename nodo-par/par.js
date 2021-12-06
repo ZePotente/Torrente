@@ -1,4 +1,5 @@
 const fs = require('fs');
+const crypto = require('crypto');
 
 // Configuracion
 const configFile = 'config.json'; //se hardcodea el nombre de la config.
@@ -11,16 +12,10 @@ function crearConfig(archivo) {
 	return JSON.parse(configString);
 }
 
-console.log(config);
-
-const net = require('net');
-
 //El límite es archivos de medio GiB por la forma de mandarlo.
 // Interfaz D P2P, TCP entre pares
-//const net = require('net');
-
-// -- Servidor --
-const puertoTCP = config.puertoTCP;
+const net = require('net');
+// -- Servidor TCP --
 const serverTCP = net.createServer(function(socket) {
 	console.log('Se recibio una conexión de otro par.');
 	socket.on('data', function(data) {
@@ -42,15 +37,12 @@ const serverTCP = net.createServer(function(socket) {
 	});
 });
 
-serverTCP.listen(puertoTCP);
-console.log('Escuchando en el puerto ' + puertoTCP);
-
-// -- Cliente --
-function descargarArchivo(ip, puerto, hash, nombreArch) {
+// -- Cliente TCP --
+function descargarArchivo(ip, puerto, body) {
 	console.log('--Inicio de la funcion descargarArchivo--');
 	let mensaje = {
 		type:'GET FILE',
-		hash
+		hash: body.id
 	};
 	let archivo = '';
 
@@ -66,9 +58,16 @@ function descargarArchivo(ip, puerto, hash, nombreArch) {
 	});
 
 	client.on('end', function() {
-		fs.writeFile(nombreArch, archivo, function (err) {
-	  		if (err) throw err;
-	  		console.log('El archivo se guardó correctamente.');
+		fs.writeFile(body.filename, archivo, function (err) {
+	  		if (err) {
+	  			console.log('Hubo un error al guardar el archivo.')
+	  			console.log(err);
+	  		} else {
+	  			console.log('El archivo se guardó correctamente.');
+	  			console.log('Agregando este nodo como seeder.')
+	  			let infoarch = {id: body.id, filename: body.filename, filesize: body.filesize};
+	  			pedirAgregarPar(infoarch, body.trackerIP, body.trackerPort);
+	  		}
 		});
 		console.log('Fin de la conexion.');
 	});
@@ -81,14 +80,10 @@ function descargarArchivo(ip, puerto, hash, nombreArch) {
 	console.log('--Fin de la funcion descargarArchivo--');
 }
 
-// Interfaz C UDP, con el Tracker
+// -- Interfaz C UDP, con el Tracker --
 // Creacion del server
 const dgram = require('dgram');
 const server = dgram.createSocket('udp4'); //ipv4
-
-server.on('listening', function() {
-	console.log('Escuchando en el puerto: ' + config.puertoUDP);
-});
 
 server.on('error', function(error) {
 	console.log('Hubo un error:');
@@ -107,12 +102,12 @@ server.on('message', function(msg, rinfo) {
 		//mensajeJSON.body.pares.forEach()...
 		let i = 0;
 		let par = body.pares[i];
-		descargarArchivo(par.parIP, par.parPort, body.id, body.filename);
+
+		descargarArchivo(par.parIP, par.parPort, body);
 	} else { //es addPar
 		console.log('Se recibio respuesta del tracker por un addPar.');
 	}
 });
-server.bind(config.puertoUDP);
 
 function isMensajeFound(ruta) {
 	let rutaArr = ruta.split("/");
@@ -146,16 +141,6 @@ function imprimirMensaje(msg, rinfo, mensaje) {
 }
 
 // Parte Cliente UDP
-nombreArchTorrente = 'torrentito.torrente';
-pedirTorrente(nombreArchTorrente);
-
-archivo = {
-	hash: 'asd',
-	nombre: 'asd.txt',
-	tam: 1000
-}
-pedirAgregarPar(archivo);
-
 // Solicitud de los pares del archivo .torrente al tracker
 function pedirTorrente(nombreTorrente) {
 	// Busca el .torrente en el filesystem,
@@ -163,18 +148,11 @@ function pedirTorrente(nombreTorrente) {
 	console.log(torrente);
 	// Prepara y envia la búsqueda
 	search = formatoSearch(nextMId(), torrente.hash, config.ip, config.puertoUDP);
-	console.log(search);
 	mensajeUDP(search, torrente.trackerIP, torrente.trackerPort);
 }
 
-function mensajeUDP(mensaje, ip, puerto) {
-	var mensajeBuf = Buffer.from(JSON.stringify(mensaje));
-	const cliente = dgram.createSocket('udp4');
-	cliente.send(mensajeBuf, puerto, ip);
-
-	//hay que ver bien cómo cerrarlo después de que se mande el mensaje
-	//porque el send es async si no me equivoco
-	setTimeout(function() {cliente.close();}, 50);
+function nextMId() {
+	return crypto.randomUUID();
 }
 
 function levantarTorrente(archivo) {
@@ -182,10 +160,6 @@ function levantarTorrente(archivo) {
 	const configString = configBuffer.toString();
 
 	return JSON.parse(configString);
-}
-
-function nextMId() {
-	return "1";
 }
 
 function formatoSearch(mid, hash, ip, puerto) {
@@ -200,20 +174,81 @@ function formatoSearch(mid, hash, ip, puerto) {
 	};
 }
 
-function pedirAgregarPar(archivo, tip, tpuerto) {
-	addPar = formatoAddPar(nextMId(), archivo, config.ip, config.puertoUDP);
-	console.log(addPar);
-	mensajeUDP(search, tip, tpuerto);
+function mensajeUDP(mensaje, ip, puerto) {
+	console.log('Se va a enviar el siguiente mensaje: ');
+	console.log(mensaje);
+	var mensajeBuf = Buffer.from(JSON.stringify(mensaje));
+	const cliente = dgram.createSocket('udp4');
+	cliente.send(mensajeBuf, puerto, ip);
+
+	//hay que ver bien cómo cerrarlo después de que se mande el mensaje
+	//porque el send es async si no me equivoco
+	setTimeout(function() {cliente.close();}, 50);
 }
-function formatoAddPar(mid, archivo, ip, puerto) {
-	let route = '/file' + '/' + archivo.hash + '/addPar';
+
+function pedirAgregarPar(infoarchivo, tip, tpuerto) {
+	addPar = formatoAddPar(nextMId(), infoarchivo, config.ip, config.puertoUDP);
+	mensajeUDP(addPar, tip, tpuerto);
+	console.log('Se envió un mensaje al tracker para agregar como par');
+}
+function formatoAddPar(mid, infoarchivo, ip, puerto) {
+	let route = '/file' + '/' + infoarchivo.hash + '/addPar';
 	return {
 		messageId: mid,
 		route,
-		id: archivo.hash,
-		filename: archivo.nombre,
-		filesize: archivo.tam,
+		id: infoarchivo.hash,
+		filename: infoarchivo.nombre,
+		filesize: infoarchivo.tam,
 		parIP: ip,
 		parPort: puerto
 	};
+}
+
+// CLI
+console.log('Configurando...');
+console.log('Archivo de configuración:');
+console.log(config);
+serverTCP.listen(config.puertoTCP);
+console.log('Servidor TCP escuchando en el puerto ' + config.puertoTCP);
+server.bind(config.puertoUDP);
+console.log('Servidor UDP escuchando en el puerto ' + config.puertoUDP);
+console.log('Fin de configuración.');
+//levantar configuración y abrir servidores y eso
+//
+const readline = require('readline');
+const rl = readline.createInterface({input: process.stdin,output: process.stdout});
+
+mostrarAyuda();
+rl.on('line', (line) => {
+	let lineArr = line.split(')');
+	let tipo = lineArr[0];
+	let nombreArch = '';
+	if (lineArr.length > 1) {
+		nombreArch = lineArr[1].trim();
+	}
+	switch (tipo) {
+    case '1':
+    	agregarArchivo(nombreArch);  
+    break;
+    case '2':
+    	pedirTorrente(nombreArch);
+    break;
+    case '3':
+		console.clear();
+    	mostrarAyuda();
+    break;
+  	}
+});
+
+function mostrarAyuda() {
+  console.log('Funcionamiento de la CLI:');
+  console.log('Ingresar alguno de los 3 siguientes comandos, son un número y una cadena, separados por un paréntesis que cierra');
+  console.log('1) nombre-del-archivo.extension');
+  console.log('-Sirve para agregar archivo nuevo (recién subido por el Cliente) para seedear-');
+  console.log('Ejemplo: "1) aoe2.exe"');
+  console.log('2) nombre-del-torrente.torrente');
+  console.log('-Pedir descarga de archivo usando un .torrente, y seedearlo (be like Sneed)-');
+  console.log('Ejemplo: "2) aaaaaaa.torrente"');
+  console.log('3');
+  console.log('-Sirve para mostrar esta ayuda.-');
 }
