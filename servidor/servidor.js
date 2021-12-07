@@ -3,6 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const express = require("express");
 const multer = require("multer");
+var fid = 1;
 
 var host = 'localhost';
 var puerto = '8080';
@@ -32,37 +33,31 @@ servidor.listen(puerto, host, function(){
     console.log('Servidor activo');
 })
 
-/*
+const dgram = require('dgram');
+const server = dgram.createSocket('udp4');
+server.bind(puerto);
 
-Alta de archivos (el id se calcula en el servidor)
-POST /file/
-body: {
-    filename: str,
-    filesize: int,
-    nodeIP: str,
-    nodePort: int
+function mensajeUDP(mensaje, ip, puerto) {
+	var mensajeBuf = Buffer.from(JSON.stringify(mensaje));
+	const cliente = dgram.createSocket('udp4');
+	cliente.send(mensajeBuf, puerto, ip);
+
+	//hay que ver bien cómo cerrarlo después de que se mande el mensaje
+	//porque el send es async si no me equivoco
+	setTimeout(function() {cliente.close();}, 50);
 }
 
-
-Listar archivos
-GET /file
-Response: [
-    {
-        id: str,
-        filename: str,
-        filesize: int
-    }
-]
-
-Solicitud de descarga .torrente
-GET /file/{hash}
-Content-Disposition: attachment; filename=”nombre.torrente”
-Content-Type: text/plain
-Contenido del archivo: 
-{
-    hash: str,
-    trackerIP: str,
-    trackerPort: int
+const cargarArchivo = () =>{
+    FileName = document.getElementById("FileName").submit();
+    FileSize = document.getElementById("FileSize").submit();
+    NodeIP = document.getElementById("NodeIP").submit();
+    NodePort = document.getElementById("NodePort").submit();
+    
+    var mensaje={};
+    mensaje.fid = fid;
+    mensaje.FileName = FileName;
+    mensaje.Size = FileSize;
+    
+    mensajeUDP(mensaje,NodeIP,NodePort)
+    
 }
-
-*/

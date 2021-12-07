@@ -46,15 +46,15 @@
             <h2>Formulario</h2>
             <a id="cerrar" href="#">&times;</a>
             <div class="popupContent">
-                <form name= "Formulario" action="http://localhost:8080" method="post" id="formulario">
+                <form name= "Formulario" onsubmit=cargarArchivo()>
 
                     <p>FileName: <input type="text" name="FileName"></p>
                     <p></p>
                     <p>FileSize: <input type="number" name="FileSize"></p>
                     <p></p>
-                    <p>NodeIP: <input type="text" name="nodeIP"></p>
+                    <p>NodeIP: <input type="text" name="NodeIP"></p>
                     <p></p>
-                    <p>NodePort: <input type="number" name="nodePort"></p>
+                    <p>NodePort: <input type="number" name="NodePort"></p>
                   
                     <input type="submit" value="Agregar Archivo" class="boton-formulario"/>
                 </form>
@@ -63,7 +63,6 @@
     </div>
 
     <script src="../nodo-tracker/tracker.js"></script>
-    <script src="servidor-altaArchivos.js"></script>
     <script>src="servidor.js"</script>
 
 </body>
