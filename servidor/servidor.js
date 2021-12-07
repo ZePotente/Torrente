@@ -1,6 +1,8 @@
-var http = require('http');
-var fs = require('fs');
-var path = require('path');
+const http = require('http');
+const fs = require('fs');
+const path = require('path');
+const express = require("express");
+const multer = require("multer");
 
 var host = 'localhost';
 var puerto = '8080';
@@ -29,3 +31,38 @@ var servidor = http.createServer(function(llamar, responder){
 servidor.listen(puerto, host, function(){
     console.log('Servidor activo');
 })
+
+/*
+
+Alta de archivos (el id se calcula en el servidor)
+POST /file/
+body: {
+    filename: str,
+    filesize: int,
+    nodeIP: str,
+    nodePort: int
+}
+
+
+Listar archivos
+GET /file
+Response: [
+    {
+        id: str,
+        filename: str,
+        filesize: int
+    }
+]
+
+Solicitud de descarga .torrente
+GET /file/{hash}
+Content-Disposition: attachment; filename=”nombre.torrente”
+Content-Type: text/plain
+Contenido del archivo: 
+{
+    hash: str,
+    trackerIP: str,
+    trackerPort: int
+}
+
+*/
