@@ -93,7 +93,6 @@ module exports =
 				i++;
 			}
 			let par = {parIP, parPort};
-			console.log(arrayArchivos);
 			arrayArchivos[i].pares.push(par);
 		}
 
