@@ -222,17 +222,20 @@ function manejarMensajeAddPar(mens) {
 	} else {
 		status = false;
 	}
-	mens = mensajeConfirmar(mens.messageId, hash, 'store', status);
+	let mid = mens.messageId;
+	mensajeConfirmar(mens, mens.messageId, hash, 'store', status);
+	delete mens.id;
+	delete mens.filename;
+	delete mens.filesize;
+	console.log('mens en manejarMensajeAddPar:'); console.log(mens);
 	return false; // no lo pasa, lo devuelve al par
 }
 
-function mensajeConfirmar(mid, hash, stipo, status) {
+function mensajeConfirmar(mens, mid, hash, stipo, status) {
 	let route = '/file/' + hash + '/' + stipo;
-	return {
-		messageId: mid,
-		route,
-		status
-	};
+	mens.messageId = mid;
+	mens.route = route;
+	mens.status = status;
 }
 
 function manejarMensajeStore(mens) {
@@ -242,7 +245,8 @@ function manejarMensajeStore(mens) {
 
 	if(miHT.isEnDominio(hash)) {
 		miHT.agregarArchivo(hash, body.filename, body.filesize, body.pares);
-		mens = mensajeConfirmar(mens.messageId, hash, 'store', true);
+		mensajeConfirmar(mens, mens.messageId, hash, 'store', true);
+		delete mens.body;
 		_pasar = false;
 	} else { 
 		_pasar = true;
@@ -274,7 +278,7 @@ function transformarEnFound(mens, hash) {
 		pares = miHT.getPares(hash); 
 		// se supone que si viene del server no deberían mandarse los pares (porque cuál sería la gracia del .torrente), pero sí si viene del nodo par,
 		// pero no hay manera de saber de cuál viene, porque ambos son origin.
-		datos = getNombreSizeArchivo(hash);
+		datos = miHT.getNombreSizeArchivo(hash);
 		body = {
 			id: hash,
 			filename: datos.filename,
@@ -284,5 +288,6 @@ function transformarEnFound(mens, hash) {
 			pares
 		};
 	}
+	mens.route+= '/found';
 	mens.body = body;
 }

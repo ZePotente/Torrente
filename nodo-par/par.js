@@ -18,7 +18,7 @@ class Seeds {
 	}
 
 	putArchivo(hash, filename) {
-		this.archivos.set(hash, []);
+		this.archivos.set(hash, filename);
 	}
 
 	getArchivo(hash) {
@@ -83,6 +83,8 @@ function descargarArchivo(ip, puerto, body) {
 	  			console.log('El archivo se guardó correctamente.');
 	  			console.log('Agregando este nodo como seeder.')
 	  			let infoarch = {id: body.id, filename: body.filename, filesize: body.filesize};
+	  			console.log('infoarch');
+	  			console.log(infoarch);
 	  			pedirAgregarPar(infoarch, body.trackerIP, body.trackerPort);
 	  		}
 		});
@@ -123,6 +125,14 @@ server.on('message', function(msg, rinfo) {
 		descargarArchivo(par.parIP, par.parPort, body);
 	} else { //es addPar
 		console.log('Se recibio respuesta del tracker por un addPar.');
+		console.log(mensajeJSON);
+		console.log(mensajeJSON);
+		if (mensajeJSON.status) { //agregó
+			mensajesPend.set(mensajeJSON.messageId, true);
+			console.log('Se agregó como seeder de un archivo');
+		} else {
+			console.log('Hubo un error al agregarse como seeder de un archivo.');
+		}
 	}
 });
 
@@ -135,7 +145,7 @@ function isMensajeFound(ruta) {
 	} else if(rutaArr[last] == 'store' || rutaArr[last] == 'addPar') {
 		tipo = false;
 	}
-	console.log('tipo = ', tipo);
+	console.log('¿Es Found? ', tipo);
 	return tipo;
 }
 
@@ -155,13 +165,15 @@ function imprimirMensaje(msg, rinfo, mensaje) {
 	console.log(rinfo);
 	console.log('mensaje:');
 	console.log(mensaje);
+	console.log('mensaje stringify:');
+	console.log(JSON.stringify(mensaje));
 }
 
 // Parte Cliente UDP
 // Solicitud de los pares del archivo .torrente al tracker
 function pedirTorrente(nombreTorrente) {
 	// Busca el .torrente en el filesystem,
-	torrente = levantarTorrente(nombreArchTorrente);
+	torrente = levantarTorrente(nombreTorrente);
 	console.log(torrente);
 	// Prepara y envia la búsqueda
 	search = formatoSearch(nextMId(), torrente.hash, config.ip, config.puertoUDP);
@@ -204,18 +216,36 @@ function mensajeUDP(mensaje, ip, puerto) {
 }
 
 function pedirAgregarPar(infoarchivo, tip, tpuerto) {
-	addPar = formatoAddPar(nextMId(), infoarchivo, config.ip, config.puertoUDP);
+	let mid = nextMId();
+	let addPar = formatoAddPar(mid, infoarchivo, config.ip, config.puertoUDP);
+	console.log('infoarchivo');
+	console.log(infoarchivo);
+	mensajesPend.set(mid,false);
 	mensajeUDP(addPar, tip, tpuerto);
 	console.log('Se envió un mensaje al tracker para agregar como par');
+	//setTimeout(reintentar(addPar, tip, tpuerto), 5000);
 }
+
+function reintentar(addPar, tip, tpuerto) {
+	let mid = addPar.messageId;
+	if (!mensajesPend.get(mid)) {
+		console.log('No se pudo agregar el nodo como seeder, reintentando...');
+		mensajeUDP(addPar, tip, tpuerto);
+	} else {
+		mensajesPend.delete(mid);
+	}
+}
+
 function formatoAddPar(mid, infoarchivo, ip, puerto) {
-	let route = '/file' + '/' + infoarchivo.hash + '/addPar';
+	let route = '/file' + '/' + infoarchivo.id + '/addPar';
+	console.log('formatoAddPar');
+	console.log(route);
 	return {
 		messageId: mid,
 		route,
-		id: infoarchivo.hash,
-		filename: infoarchivo.nombre,
-		filesize: infoarchivo.tam,
+		id: infoarchivo.id,
+		filename: infoarchivo.filename,
+		filesize: infoarchivo.filesize,
 		parIP: ip,
 		parPort: puerto
 	};
@@ -223,11 +253,13 @@ function formatoAddPar(mid, infoarchivo, ip, puerto) {
 
 function agregarArchivo(filename) {
 	//(await fs.promises.stat(file)).size
-	let stats = fs.statSync("filename");
+	let stats = fs.statSync(filename);
 	let filesize = stats["size"];
 	let concat = filename+filesize;
 	let hash = crypto.createHash('sha1').update(concat).digest('hex');
 	seedArchivos.putArchivo(hash, filename); // colección de archivos global
+	console.log('seedArchivos: ');
+	console.log(seedArchivos);
 }
 
 // CLI
@@ -240,6 +272,7 @@ server.bind(config.puertoUDP);
 console.log('Servidor UDP escuchando en el puerto ' + config.puertoUDP);
 let seedArchivos = new Seeds();
 console.log('Fin de configuración.');
+let mensajesPend = new Map();
 //
 const readline = require('readline');
 const rl = readline.createInterface({input: process.stdin,output: process.stdout});
