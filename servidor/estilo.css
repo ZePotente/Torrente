@@ -9,6 +9,11 @@ h1{
   font-size: 60px;
 }
 
+h2{
+  padding: 2.5%;
+  font-size: 40px;
+}
+
 .Titulo{
   padding: 3.5%;
   margin: 0.3%;
@@ -16,7 +21,6 @@ h1{
 }
 
 #botonera {
-  padding-top: 10%;
   padding-left: 5%;
 }
 
@@ -51,3 +55,75 @@ h1{
   background-color: #82bd35d0;
 }
 
+.boton-formulario {
+
+  margin-top: 2%;
+  justify-content: center;
+  align-items: center;
+
+  border-radius: .50rem;
+  border-color:  white;
+
+  background-color:white;
+  transition: background-color .15s ease-in-out;
+  color: #82bd35d0;
+
+  font-size: 15px;
+  font-weight: 500;
+
+}
+
+.boton-formulario:hover, .boton-formulario:focus {
+  background-color: whitesmoke;
+}
+
+.boton-formulario:active {
+  background-color:whitesmoke;
+}
+
+/*POP UP*/
+
+.overlay { 
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(0, 0, 0, 0.7);
+  transition: opacity 500ms;
+  visibility: hidden;
+  opacity: 0;
+}
+
+.overlay:target{
+  visibility: visible;
+  opacity: 1;
+}
+
+.popupBody{
+  width: 46%;
+  padding: 0.5%;
+  border-radius: 15px;
+  box-shadow: 0 0 5px #CCC;
+  background-color:  #8cd62cd0;
+  position: relative;
+  margin: 20% auto;
+  transition: all 5s ease-in-out;
+}
+
+#formulario{
+  padding-left: 2%;
+  font-weight: 500;
+  font-size: 15px;
+}
+
+#cerrar{
+  position: absolute;
+  top: 20px;
+  right: 30px;
+  font-size: 30px;
+  font-weight: bold;
+  text-decoration: none;
+  color:  white;
+  transition: all 200ms;
+}

@@ -25,13 +25,13 @@
         </header>
 
     </div>
-
     
     <div id="botonera">
         <ul>
             <li>
-                <input type="submit" value="Subir Archivo" class="boton">
-                <input type="file" name="src-file1" aria-label="Archivo">
+                <button class="boton">
+                    <p><a href="#subirArchivo">Subir Archivo</a></p>
+                </button> 
             </li>
             <li>
                 <button class="boton">
@@ -40,6 +40,29 @@
             </li>
         </ul>
     </div>
+
+    <div id="subirArchivo" class="overlay">
+        <div class="popupBody">
+            <h2>Formulario</h2>
+            <a id="cerrar" href="#">&times;</a>
+            <div class="popupContent">
+                <form name= "Formulario" onsubmit=cargarArchivo()>
+
+                    <p>FileName: <input type="text" name="FileName"></p>
+                    <p></p>
+                    <p>FileSize: <input type="number" name="FileSize"></p>
+                    <p></p>
+                    <p>NodeIP: <input type="text" name="NodeIP"></p>
+                    <p></p>
+                    <p>NodePort: <input type="number" name="NodePort"></p>
+                  
+                    <input type="submit" value="Agregar Archivo" class="boton-formulario"/>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="../nodo-tracker/tracker.js"></script>
     <script>src="servidor.js"</script>
 
 </body>
