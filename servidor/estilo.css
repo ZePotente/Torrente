@@ -4,7 +4,9 @@
   font-family: 'Segoe UI';
   color: white;
 }
-
+.black{
+  color: black;
+}
 h1{
   font-size: 60px;
 }
