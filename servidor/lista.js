@@ -1,5 +1,5 @@
 var http = require('http');
-http.request('scan',resulado);
+http.request('scan',resultado);
 
 var elements = [];
 
