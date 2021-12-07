@@ -197,6 +197,8 @@ function manejarMensajeScan(mens) {
 	let _pasar;
 
 	if (mensajesPend.includes(mens.messageId)) {
+		let i = mensajesPend.indexOf(mens.messageId);
+		mensajesPend.splice(i, 1);
 		_pasar = false;
 	} else {
 		if (mens.body === undefined) { //si viene directo del server, el body es undefined
