@@ -1,9 +1,8 @@
 const dgram = require('dgram');
 
-const hash = 'afdddd';
 const mid = '1';
 const ipDest = '127.0.0.1';
-const puertoDest = 10001;
+const puertoDest = 9000;
 const ipServer = '127.0.0.1'
 const puertoServer = 10002;
 const ipTracker = '127.0.0.1'
@@ -78,12 +77,12 @@ function formatoStore(hash, mid, ip, puerto, filename, filesize, pares) {
 let pares = [
 	{
 		parIP:'127.0.0.1',
-		parPort:5000
-	},
+		parPort:20000
+	},/*
 	{
 		parIP:'127.0.0.1',
 		parPort:5001
-	}];
+	}*/];
 
 // ip y puerto son las del serverUDP del Servidor
 // files es un vector de {id, filename, filesize} (con esos nombres)
@@ -100,10 +99,13 @@ function formatoScan(mid, ip, puerto, files) {
 	};
 }
 // Ejemplo de files
-let id = '11'; let filename = 'arch1.txt'; let filesize = 1000;
+let id = 'fd728dc6c461c4ba810d55d3c9194477a951b10b'; let filename = 'asd.txt'; let filesize = 21;
 var listaArch = [{id, filename, filesize}];
+let hash = id;
+/*
 id = '12'; filename = 'arch2.txt'; filesize = 1002;
 listaArch.push({id, filename, filesize});
+*/
 
 mensajeCount = formatoCount(mid, 0, 0);
 mensajeSearch = formatoSearch(hash, mid, ipServer, puertoServer);
@@ -123,7 +125,7 @@ console.log(JSON.stringify(mensajeSearch));
 console.log(JSON.stringify(mensajeFound));
 console.log(JSON.stringify(mensajeStore));
 console.log(JSON.stringify(mensajeScan));
-//mensajeUDP(mensaje, ipDest, puertoDest);
+mensajeUDP(mensajeStore, ipDest, puertoDest);
 function mensajeUDP(mensaje, ip, puerto) {
 	var mensajeBuf = Buffer.from(JSON.stringify(mensaje));
 	const cliente = dgram.createSocket('udp4');

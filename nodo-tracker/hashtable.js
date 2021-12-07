@@ -1,4 +1,4 @@
-module exports = 
+module.exports = 
 	class HT {
 		constructor(inicio, fin) {
 			this.rango = {inicio, fin};
