@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const express = require("express");
 const multer = require("multer");
-var fid = 1;
+const crypto = require('crypto');
 
 var host = 'localhost';
 var puerto = '8080';
@@ -54,10 +54,10 @@ const cargarArchivo = () =>{
     NodePort = document.getElementById("NodePort").submit();
     
     var mensaje={};
-    mensaje.fid = fid;
+    mensaje.fid = crypto.randomUUID();
     mensaje.FileName = FileName;
     mensaje.Size = FileSize;
-    
+
     mensajeUDP(mensaje,NodeIP,NodePort)
     
 }
