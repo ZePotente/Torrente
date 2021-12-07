@@ -155,7 +155,7 @@ function tipoMensaje(ruta) {
 
 // Recibe el mensaje y lo manda a la función que se encargue de ese tipo de mensaje
 // Estas modifican el propio mensaje para devolver la respuesta
-// //Devuelve el mensaje, y si lo tiene que pasar al siguiente
+// Devuelve el mensaje, y si lo tiene que pasar al siguiente o no
 function manejarMensajeTracker(mensajeJSON, tipo) {
 	let pasar = true;
 	switch(tipo) {
@@ -269,17 +269,20 @@ function manejarMensajeSearch(mens) {
 }
 
 function transformarEnFound(mens, hash) {
-	pares = miHT.getPares(hash); 
-	// se supone que si viene del server no deberían mandarse los pares (porque cuál sería la gracia del .torrente), pero sí si viene del nodo par,
-	// pero no hay manera de saber de cuál viene, porque ambos son origin.
-	filename = miHT.getNombreArchivo(hash);
-	filesize = miHT.getSizeArchivo(hash);
-	mens.body = {
-		id: hash,
-		filename,
-		filesize,
-		trackerIP: config.nodo.ip,
-		trackerPort: config.nodo.puerto,
-		pares
-	};
+	let body = {};
+	if(miHT.existe(hash)) {
+		pares = miHT.getPares(hash); 
+		// se supone que si viene del server no deberían mandarse los pares (porque cuál sería la gracia del .torrente), pero sí si viene del nodo par,
+		// pero no hay manera de saber de cuál viene, porque ambos son origin.
+		datos = getNombreSizeArchivo(hash);
+		body = {
+			id: hash,
+			filename: datos.filename,
+			filesize: datos.filesize,
+			trackerIP: config.nodo.ip,
+			trackerPort: config.nodo.puerto,
+			pares
+		};
+	}
+	mens.body = body;
 }
