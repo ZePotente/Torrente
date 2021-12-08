@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Torrente</title>
+    <link rel="stylesheet" href="estilo.css">
+</head>
+
+<body>
+    <!--Cabecera-->
+    <div id="main-container">
+        <header>
+            <div class="Titulo">
+                <h1>
+                    Torrente
+                </h1>
+                <p> </p>
+                <p>
+                    Julachis Sebastian, Pieroni Agustina, Posada Ezequiel.
+                </p>
+                
+            </div>
+        </header>
+
+    </div>
+    
+    <div id="botonera">
+        <ul>
+            <li>
+                <button class="boton">
+                    <p><a href="#subirArchivo">Subir Archivo</a></p>
+                </button> 
+            </li>
+            <li>
+                <button class="boton">
+                    <p><a href="#listarArchivos">Listar Archivos</a></p>
+                </button>
+            </li>
+        </ul>
+    </div>
+
+    <div id="subirArchivo" class="overlay">
+        <div class="popupBody">
+            <h2>Formulario</h2>
+            <a id="cerrar" href="#">&times;</a>
+            <div class="popupContent">
+                <form name= "Formulario" onsubmit=cargarArchivo()>
+
+                    <p>FileName: <input type="text" name="FileName" class="black"></p>
+                    <p></p>
+                    <p>FileSize: <input type="number" name="FileSize"class="black"></p>
+                    <p></p>
+                    <p>NodeIP: <input type="text" name="NodeIP"class="black"></p>
+                    <p></p>
+                    <p>NodePort: <input type="number" name="NodePort"class="black"></p>
+                  
+                    <input type="submit" value="Agregar Archivo" class="boton-formulario"/>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div id="listarArchivos" class="overlay">
+        <div class="popupBody">
+            <h2>Lista de Archivos</h2>
+            <a id="cerrar" href="#">&times;</a>
+            <div class="popupContent">
+                
+            </div>
+        </div>
+    </div>
+
+    <script src="../nodo-tracker/tracker.js"></script>
+    <script>src="servidor.js"</script>
+
+</body>
